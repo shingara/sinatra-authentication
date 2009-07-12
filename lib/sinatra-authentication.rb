@@ -1,15 +1,21 @@
 require 'sinatra/base'
-require 'dm-core'
-require 'dm-timestamps'
-require 'dm-validations'
-require Pathname(__FILE__).dirname.expand_path + "models/user"
 
 module SinatraAuthentication
-  VERSION = "0.0.1"
+  VERSION = "0.0.2"
 end
 
 module Sinatra
   module LilAuthentication
+
+    class UserModel
+
+      def self.require_path(path)
+        @@path ||=false
+        require path unless @@path
+      end
+
+    end
+
     def self.registered(app)
       #INVESTIGATE
       #the possibility of sinatra having an array of view_paths to load from
@@ -17,12 +23,17 @@ module Sinatra
       #sinatra 9.1.1 doesn't have multiple view capability anywhere
       #so to get around I have to do it totally manually by
       #loading the view from this path into a string and rendering it
-      set :lil_authentication_view_path, Pathname(__FILE__).dirname.expand_path + "views/"
+      set :lil_authentication_view_path, File.dirname(__FILE__) + "/views/"
+      set :user_model_path, File.dirname(__FILE__) + '/models/user.rb'
 
       #TODO write captain sinatra developer man and inform him that the documentation
       #conserning the writing of extensions is somewhat outdaded/incorrect.
       #you do not need to to do self.get/self.post when writing an extension
       #In fact, it doesn't work. You have to use the plain old sinatra DSL
+
+      before do
+        UserModel.require_path(options.user_model_path)
+      end
 
       get '/users' do
         @users = User.all

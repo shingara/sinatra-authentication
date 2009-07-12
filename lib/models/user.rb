@@ -1,3 +1,7 @@
+require 'dm-core'
+require 'dm-timestamps'
+require 'dm-validations'
+
 class User
   include DataMapper::Resource
 
