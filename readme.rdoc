@@ -69,3 +69,11 @@ with true, current_user.permission_level with 0 and any other method calls with 
 
 This makes some view logic easier since you don't always have to check if the user is logged in,
 although a logged_in? helper method is still provided
+
+# Configuration
+
+You can configure a little this gem with option :
+
+set :user_model_path, 'user_activerecord.rb'
+
+With this option, you can define a path where a User class is define. You just need implement a several method
