@@ -7,15 +7,6 @@ end
 module Sinatra
   module LilAuthentication
 
-    class UserModel
-
-      def self.require_path(path)
-        @@path ||=false
-        require path unless @@path
-      end
-
-    end
-
     def self.registered(app)
       #INVESTIGATE
       #the possibility of sinatra having an array of view_paths to load from
@@ -24,15 +15,17 @@ module Sinatra
       #so to get around I have to do it totally manually by
       #loading the view from this path into a string and rendering it
       set :lil_authentication_view_path, File.dirname(__FILE__) + "/views/"
-      set :user_model_path, File.dirname(__FILE__) + '/models/user.rb'
 
       #TODO write captain sinatra developer man and inform him that the documentation
       #conserning the writing of extensions is somewhat outdaded/incorrect.
       #you do not need to to do self.get/self.post when writing an extension
       #In fact, it doesn't work. You have to use the plain old sinatra DSL
-
-      before do
-        UserModel.require_path(options.user_model_path)
+      #
+      # Test if User is define. isn't use User embeded
+      begin
+        User
+      rescue NameError => e
+        require 'models/user'
       end
 
       get '/users' do
