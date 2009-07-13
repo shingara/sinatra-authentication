@@ -1,4 +1,5 @@
 require 'sinatra/base'
+require 'include/authenticated_system'
 
 module SinatraAuthentication
   VERSION = "0.0.2"
@@ -24,6 +25,21 @@ module Sinatra
       # Test if User is define. isn't use User embeded
       begin
         User
+        raise NotImplementedError.new('You need include Sinatra::LilAuthentication::AuthenticatedSystem in your User model') unless User.include?(Sinatra::LilAuthentication::AuthenticatedSystem)
+        raise NotImplementedError.new('No self#all method in User') unless User.respond_to?(:all)
+        raise NotImplementedError.new('No self#get(id) method in User') unless User.respond_to?(:get)
+        raise NotImplementedError.new('No self#get_by_email(email) method in User') unless User.respond_to?(:get_by_email)
+        [:id, :created_at].each do |reader_property|
+          eval %{
+            raise NotImplementedError.new('No reader accessor to id property in User') unless User.new.respond_to?(:#{reader_property})
+          }
+        end
+        [:salt, :email, :hashed_password, :permission_level, :password, :password_confirmation].each do |property|
+          eval %{
+            raise NotImplementedError.new('No reader accessor to #{property} property in User') unless User.new.respond_to?(:#{property})
+            raise NotImplementedError.new('No writer accessor to #{property} property in User') unless User.new.respond_to?(:#{property}=)
+          }
+        end
       rescue NameError => e
         require 'models/user'
       end
@@ -39,12 +55,7 @@ module Sinatra
 
       get '/users/:id' do
         login_required
-
-        #INVESTIGATE
-        #
-        #WHY THE HECK WON'T GET RETURN ANYTHING?
-        #if I user User.get(params[:id]) it returns nil for some inexplicable reason
-        @user = User.first(:id => params[:id])
+        @user = User.get(params[:id])
         haml get_view_as_string("show.haml"), :layout => use_layout?
       end
 
@@ -62,12 +73,12 @@ module Sinatra
       end
 
       post '/login' do
-          if user = User.authenticate(params[:email], params[:password])
-            session[:user] = user.id
-            redirect '/'
-          else
-            redirect '/login'
-          end
+        if user = User.authenticate(params[:email], params[:password])
+          session[:user] = user.id
+          redirect '/'
+        else
+          redirect '/login'
+        end
       end
 
       get '/logout' do
@@ -142,7 +153,7 @@ module Sinatra
 
     def current_user
       if session[:user]
-        User.first(:id => session[:user])
+        User.get(session[:user])
       else
         GuestUser.new
       end
