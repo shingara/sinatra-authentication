@@ -1,3 +1,8 @@
+== 0.0.2
+
+* 1 major enhancement:
+  * You can change you User model class and define your own
+
 == 0.0.1 2009-04-06
 
 * 1 major enhancement:
